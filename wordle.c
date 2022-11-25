@@ -71,9 +71,16 @@ int main() {
 
    while (numOfGuesses < 6 && !guessedCorrectly) {
       // get guess from player
-      printf("Input a 5-letter word and press enter: ");
+      printf("Ingrese un palabra de 5 letras y presione enter: ");
       scanf("%s", guess);
-      printf("You have guessed %s \n", guess);
+
+      printf("Ingresaste '%s' \n", guess);
+
+      int lenGuess = strlen(guess);
+      if(lenGuess != 5 ){
+         printf("La palabra debe contener 5 letras.\n");
+         continue;
+      }
 
       numOfGuesses += 1;
 
@@ -83,9 +90,9 @@ int main() {
 
    // display end of game message
    if (guessedCorrectly) {
-      printf("Congratulations! You guessed the correct word in %d times!\n", numOfGuesses);
+      printf("Felicitaciones! Adivinaste la palabra en %d intentos!\n", numOfGuesses);
    } else {
-      printf("You have used up yours guesses... the correct word is %s\n", answer);
+      printf("Perdiste! Usaste las 6 vidas sin adivinar... la palabra correcta es '%s'\n", answer);
    }
 
    for (int i = 0; i < wordCount; i++) {
