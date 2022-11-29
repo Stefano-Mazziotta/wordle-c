@@ -6,6 +6,18 @@
 
 #define MAX_NUM_OF_WORDS 100
 
+/* Desarrollar sistema de puntos
+ * Puntaje:
+ *
+ *  ● El usuario inicia con 5.000 puntos.
+ *  ● Si acierta la palabra en el primer intento, gana la jugada con una puntuación de 10.000.
+ *  ● A medida que realice intentos sin lograr descubrir la palabra, es decir use otra fila, se le  descuenta 500.
+ *  ● Además, en cada intento suman 50 puntos las nuevas letras acertadas (en lugar incorrecto) y 100 las nuevas letras ubicadas correctamente.
+ *  ● Finalmente al ganar recibe 2.000 puntos adicionales.
+ * 
+ *  Si no logra descubrir la palabra la puntuación final es 0.
+*/
+
 bool processGuess(const char* answer, const char* guess){
    // the clue
    char clue[6] = {'-', '-', '-', '-', '-', '\0'};
@@ -38,14 +50,13 @@ bool processGuess(const char* answer, const char* guess){
    return strcmp(clue, "GGGGG") == 0;
 }
 
-
-
 int main() {
    
    // load the words
    char** wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char*));
 
    int wordCount = 0;
+   int points = 5000;
    char* fiveLetterWord = malloc(6*sizeof(char));
 
    FILE* wordsFile = fopen("words.txt", "r");
@@ -90,11 +101,26 @@ int main() {
 
    // display end of game message
    if (guessedCorrectly) {
-      printf("Felicitaciones! Adivinaste la palabra en %d intentos!\n", numOfGuesses);
-   } else {
+      
+      // revisar esto
+      char txtIntento = "intentos!";
+
+      if(numOfGuesses == 1){
+         points = 10000;
+         txtIntento = "intento!";
+      }
+
+      printf("Felicitaciones! Adivinaste la palabra en %d %s!\n", numOfGuesses, txtIntento);
+   } 
+
+   if(!guessedCorrectly) {
       printf("Perdiste! Usaste las 6 vidas sin adivinar... la palabra correcta es '%s'\n", answer);
+      points = 0;
    }
 
+   printf("Tú puntuación final es de %d puntos.\n", points);
+
+   // clean memory
    for (int i = 0; i < wordCount; i++) {
       free(wordsList[i]);
    }
