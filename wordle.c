@@ -18,14 +18,30 @@
  *  Si no logra descubrir la palabra la puntuación final es 0.
 */
 
-int calculateScore(int score, char clue, bool guessedCorrectly, int numOfGuesses ){
+int calculateScore(int score, char* clue, bool guessedCorrectly, int numOfGuesses ){
    int newScore = score; 
 
    if(guessedCorrectly && numOfGuesses == 1){
       newScore = 10000; 
+      return newScore;
    }
 
-   // seguir aca
+   if(!guessedCorrectly && numOfGuesses == 6){
+      newScore = 0;
+      return newScore;
+   }
+
+   if(!guessedCorrectly && numOfGuesses < 6){
+      newScore = score - 500;
+
+      // obtener la cantidad de G y multiplicar por 100
+      // obtener la cantidad de Y y multiplicar por 50
+   }
+
+   if(guessedCorrectly){
+      newScore = score + 2000;
+   }
+
 
    return newScore;
 } 
