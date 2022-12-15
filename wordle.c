@@ -1,20 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <stdbool.h>
-
-#define MAX_NUM_OF_WORDS 100
-
-// constantes para calcular el score.
-#define POINTS_WIN_FIRST_TRY 10000
-#define POINTS_WIN 2000
-#define POINTS_GAME_OVER 0
-#define POINTS_MOVE_NEXT_ROW 500
-#define POINTS_FOR_G_LETTER 100
-#define POINTS_FOR_Y_LETTER 50
-
-/* Desarrollar sistema de puntos
+/*
+ * links importantes
+ *   https://es.stackoverflow.com/questions/376010/c%C3%B3mo-funcionan-realmente-los-arrays-bidimensionales-din%C3%A1micos-en-c
+ *   https://www.knowprogram.com/c-programming/2d-array-of-strings-in-c/
+ *   https://beginnersbook.com/2014/01/2d-arrays-in-c-example/
+ *   https://stackoverflow.com/questions/25531341/strcpy-segmentation-fault-c
+ *   https://stackoverflow.com/questions/36890624/malloc-a-2d-array-in-c
+ *   https://stackoverflow.com/questions/54244461/dynamically-allocating-memory-for-2d-char-array
+ *
+ * Desarrollar sistema de puntos
  * Puntaje:
  *
  *  ● El usuario inicia con 5.000 puntos.
@@ -24,73 +17,132 @@
  *  ● Finalmente al ganar recibe 2.000 puntos adicionales.
  *
  *  Si no logra descubrir la palabra la puntuación final es 0.
+ */
 
-*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <stdbool.h>
 
-int getMatchesQuantity(char* str1, char letter[1])
-{
-    int matchesQuantity = 0;
+#define MAX_NUM_OF_WORDS 100
+#define MAX_GUESSES 6
+#define MAX_LETTERS 5
 
-    for (int i = 0; i < strlen(str1); i++) {
-        bool isMatch = str1[i] == letter[0];
-        if(isMatch){
-            matchesQuantity++;
+#define INT_VALUE_FOR_INITIALIZE -1
+#define INT_VALUE_FOR_GREEN 100
+#define INT_VALUE_FOR_YELLOW 50
+#define NO_POINTS 0
+
+// constantes para calcular el score.
+#define POINTS_WIN_FIRST_TRY 10000
+#define POINTS_WIN 2000
+#define POINTS_GAME_OVER 0
+#define POINTS_MOVE_NEXT_ROW 500
+
+#define MAX_SIZE_MEMORY_YELLOW_LETTERS 30
+
+int calculatePointsGreenYellow(int **attempts, int numOfGuesses){
+    int total = 0;
+
+    for (int row = 0; row < numOfGuesses; row++)
+    {
+        for (int column = 0; column < MAX_LETTERS; column++)
+        {
+            int value = attempts[row][column];
+            if(value != -1 && row != MAX_GUESSES - 1){
+                total = total + value;
+            }
         }
+        
+    }
+
+    return total;
+}
+
+int calculateScore(int **attempts, bool guessedCorrectly, int numOfGuesses)
+{
+    int score = 5000;
+
+    if (numOfGuesses == 1)
+    {
+        score = POINTS_WIN_FIRST_TRY;
+        return score;
+    }
+
+    if (!guessedCorrectly && numOfGuesses == 6)
+    {
+        score = POINTS_GAME_OVER;
+        return score;
     }
     
-    return matchesQuantity;
+    // -1 porque no se cuenta el ultimo intentos.
+    score = score - (POINTS_MOVE_NEXT_ROW * (numOfGuesses - 1));
+
+    // calcular puntos letras verdes y letras amarillas
+    int pointsGreenYellow = calculatePointsGreenYellow(attempts, numOfGuesses); 
+    score = score + POINTS_WIN + pointsGreenYellow;
+
+    return score;
 }
 
-int calculateScore(int score, char* clue, bool guessedCorrectly, int numOfGuesses )
+// busca si existe una [G = "100 puntos"] dentro de la pista del intento actual -> linea 126.
+//  - si la hay, establece 0 (NO_POINTS) a las siguientes filas en la misma posicion de la letra correcta ingresada.
+//  - si no la hay, pasa a la letra siguiente.
+void checkLettersGreen(int **attempts, int numOfGuesses)
 {
-    int newScore = score;
-
-    if(guessedCorrectly && numOfGuesses == 1)
+    int row = numOfGuesses - 1;
+    for (int i = 0; i < MAX_LETTERS; i++)
     {
-        newScore = POINTS_WIN_FIRST_TRY;
-        return newScore;
+        int attemptValue = attempts[row][i];
+
+        if (attemptValue == 100)
+        {
+            for (int j = MAX_GUESSES - 1; j > row; j--)
+            {
+                attempts[j][i] = NO_POINTS;
+            }
+        }
     }
-
-    if(!guessedCorrectly && numOfGuesses == 6)
-    {
-        newScore = POINTS_GAME_OVER;
-        return newScore;
-    }
-
-    if(!guessedCorrectly && numOfGuesses < 6)
-    {
-        newScore = newScore - POINTS_MOVE_NEXT_ROW;
-        
-        int quantityOfG = getMatchesQuantity(clue,"G");
-        int quantityOfY = getMatchesQuantity(clue,"Y");
-
-        newScore = newScore + (POINTS_FOR_G_LETTER * quantityOfG);
-        newScore = newScore + (POINTS_FOR_Y_LETTER * quantityOfY);
-    }
-
-    if(guessedCorrectly)
-    {
-        newScore = newScore + POINTS_WIN;
-    }
-
-    return newScore;
 }
 
-char* processGuess(const char* answer, const char* guess)
+bool checkRepeatedLetterYellow(char *inputLetters, char yellowLetter)
+{
+    
+    // inputLetters -> array unidimensional de letras amarillas (correctas en lugar quivocado) ingresadas anteriormente.
+    // letter -> letra amarilla de la palabra ingresada.
+    // verificar que la letra ingresada esta en inputLetters.
+
+    //  si esta, retorno true
+    //  si no esta, la agrego al array y retorno false;
+    bool existLetterInArray = strpbrk(inputLetters, &yellowLetter) != 0; 
+    if(existLetterInArray){
+        return true;
+    }
+    
+    int len = strlen(inputLetters);
+    inputLetters[len] = yellowLetter;
+    inputLetters[len+1] = '\0';
+
+    return false;
+}
+
+bool processGuess(const char *answer, const char *guess, int **attempts, int numOfGuesses, char *inputYellowLetters)
 {
     // the clue
-    char clue[6] = {'-', '-', '-', '-', '-', '\0'};
-
-    // a set of flags indicating if that letter in the answer in used as clue
-    bool answerFlags[5] = {false, false, false, false, false};
+    char clue[MAX_LETTERS + 1] = {'-', '-', '-', '-', '-', '\0'};
+    int row = numOfGuesses - 1;
 
     // first pass, look for exact matches
     for (int i = 0; i < 5; i++)
     {
         if (guess[i] == answer[i])
         {
+
             clue[i] = 'G';
-            answerFlags[i] = true;
+            if(attempts[row][i] == INT_VALUE_FOR_INITIALIZE){
+                attempts[row][i] = INT_VALUE_FOR_GREEN;
+            }
         }
     }
 
@@ -101,107 +153,131 @@ char* processGuess(const char* answer, const char* guess)
         {
             for (int j = 0; j < 5; j++)
             {
-                if (guess[i] == answer[j] && !answerFlags[j])
+                bool existLetterInAnswer = guess[i] == answer[j];
+                bool isDiferentFromGreen = (attempts[row][j] != INT_VALUE_FOR_GREEN || attempts[row][j] != NO_POINTS );
+
+                if ( existLetterInAnswer && isDiferentFromGreen)
                 {
                     clue[i] = 'Y';
-                    answerFlags[j] = true;
+                    char yellowLetter;
+                    yellowLetter = guess[i]; 
+
+                    // si existe pongo 0 puntos, si no existe pongo 50 puntos.
+                    bool existLetterYellow = checkRepeatedLetterYellow(inputYellowLetters, yellowLetter);
+                    if(existLetterYellow){
+                        attempts[row][i] = NO_POINTS;
+                        break;    
+                    }
+
+                    attempts[row][i] = INT_VALUE_FOR_YELLOW;
                     break;
                 }
             }
         }
     }
 
+    checkLettersGreen(attempts, numOfGuesses);
+
     printf("%s\n", clue);
-    char* clueGlobal = malloc(6*sizeof(char));
-    strcpy(clueGlobal, clue);
-    return clueGlobal;
+    return strcmp(clue, "GGGGG") == 0;
 }
 
-void endGame(bool guessedCorrectly, int numOfGuesses, int score, char* answer)
+void endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int score)
 {
     // display end of game message
     if (guessedCorrectly)
     {
 
         bool wonFirstTime = numOfGuesses == 1;
-        char* txtIntento =  wonFirstTime ? "intento": "intentos";
+        char *txtIntento = wonFirstTime ? "intento" : "intentos";
 
         printf("Felicitaciones! Adivinaste la palabra en %d %s!\n", numOfGuesses, txtIntento);
     }
 
-    if(!guessedCorrectly)
+    if (!guessedCorrectly)
     {
         printf("Perdiste! Usaste las 6 vidas sin adivinar... la palabra correcta es '%s'\n", answer);
     }
 
     printf("Tú puntuación final es de %d puntos.\n", score);
+}
 
+int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
+{
+
+    FILE *wordsFile = fopen("words.txt", "r");
+
+    while (fscanf(wordsFile, "%s", fiveLetterWord) != EOF && wordCount < MAX_NUM_OF_WORDS)
+    {
+        wordsList[wordCount] = fiveLetterWord;
+        wordCount++;
+
+        fiveLetterWord = malloc(6 * sizeof(char));
+    }
+    fclose(wordsFile);
+    return wordCount;
 }
 
 int main()
 {
 
-    // load the words
-    char** wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char*));
+    char **wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char *));
+    char *fiveLetterWord = malloc(6 * sizeof(char));
+    char *inputYellowLetters = (char*)malloc ( MAX_SIZE_MEMORY_YELLOW_LETTERS * sizeof (char));
 
     int wordCount = 0;
-    int score = 5000;
-    char* fiveLetterWord = malloc(6*sizeof(char));
+    wordCount = loadWords(wordsList, fiveLetterWord, wordCount);
 
-    FILE* wordsFile = fopen("words.txt", "r");
-
-    while ( fscanf(wordsFile, "%s", fiveLetterWord) != EOF && wordCount < MAX_NUM_OF_WORDS)
-    {
-        wordsList[wordCount] = fiveLetterWord;
-        wordCount++;
-
-        fiveLetterWord = malloc(6*sizeof(char));
-    }
-    fclose(wordsFile);
-
-    // start the game
     // pick a word randomly
     srand(time(NULL));
-    char* answer = wordsList[rand()%wordCount];
+    char *answer = wordsList[rand() % wordCount];
+
+    // start the game
+    // inicializar intentos en array bidimensional
+    int **attempts = malloc(MAX_GUESSES * sizeof(int *));
+    for (int i = 0; i != MAX_GUESSES; ++i)
+    {
+        attempts[i] = malloc(MAX_LETTERS * sizeof(int));
+        for (int j = 0; j != MAX_LETTERS; ++j)
+        {
+            attempts[i][j] = INT_VALUE_FOR_INITIALIZE;
+        }
+    }
 
     // do the game loop
     int numOfGuesses = 0;
     bool guessedCorrectly = false;
-    char* guess = malloc(6*sizeof(char));
+    char *guess = malloc(6 * sizeof(char));
 
-    while (numOfGuesses < 6 && !guessedCorrectly)
+    while (numOfGuesses < MAX_GUESSES && !guessedCorrectly)
     {
 
+        printf("Intento nro. %d \n", numOfGuesses + 1);
         printf("Ingrese un palabra de 5 letras y presione enter: ");
         scanf("%s", guess);
 
         printf("Ingresaste '%s' \n", guess);
 
-        int lenGuess = strlen(guess);
-        if(lenGuess != 5 )
+        const int lenGuess = strlen(guess);
+        if (lenGuess != MAX_LETTERS)
         {
             printf("La palabra debe contener 5 letras.\n");
             continue;
         }
 
         numOfGuesses += 1;
-
-        char* clue = processGuess(answer, guess);
-        guessedCorrectly = strcmp(clue, "GGGGG") == 0;
-        score = calculateScore(score, clue, guessedCorrectly, numOfGuesses);
-
+        guessedCorrectly = processGuess(answer, guess, attempts, numOfGuesses, inputYellowLetters);
+        
     }
-    endGame(guessedCorrectly, numOfGuesses, score, answer);
-
-    // clean memory
-    for (int i = 0; i < wordCount; i++)
-    {
-        free(wordsList[i]);
-    }
+    
+    int score = calculateScore(attempts, guessedCorrectly, numOfGuesses);
+    endGame(guessedCorrectly, numOfGuesses, answer, score);
 
     free(wordsList);
     free(fiveLetterWord);
     free(guess);
+    free(attempts);
+    free(inputYellowLetters);
 
     return 0;
 }
