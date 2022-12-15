@@ -200,81 +200,7 @@ int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
     return wordCount;
 }
 
-int selectNumberOfGames(){
-    int quantityGames = 0;
-
-    while(quantityGames < 1 || quantityGames > 8){
-        printf("Cuantas partidas deseas jugar? (max 8) \n");
-        scanf("%d", &quantityGames);
-
-        if(quantityGames < 1 || quantityGames > 8){
-            printf("Ingrese una cantidad de partidas validas. \n");
-            continue;
-        }
-    }
-    return quantityGames;
-}
-
-bool askFinishGame(){
-    printf("Desea finalizar el juego? [y/n] \n");
-    char finishGame[1] = {"x"};
-
-    while(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
-        scanf("%s", &finishGame[0]);
-        if(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
-            printf("Debe ingresar una respuesta valida. [y/n] \n");
-        }
-        continue;
-    }
-
-    return finishGame[0] == YES[0] ? true : false;
-}
-
-int main()
-{
-/*
- *  Sesión de Juego:
- *      
- *      El jugador elegirá participar de una sesión de juego, donde se le solicitará indicar cuantas
- *      partidas o jugadas quieren realizarse, con un máximo de 8(ocho).
- *      
- *      Deberá ofrecerse también la posibilidad de finalizar el juego luego de que cada partida finalice.
- * 
- *      Durante el juego, y antes de iniciar una partida debe indicarse el número de partida y cuantas
- *      se jugarán en total. Por ejemplo indicar - Partida Nro 2 de 6.
- * 
- *       */
-
-
-    int quantityGames;
-    quantityGames = selectNumberOfGames();
-
-    int numberOfGame = 1;
-    bool isFinishGame;
-    
-    while(numberOfGame <= quantityGames && !isFinishGame){
-        isFinishGame = false;
-        printf("Partida nro. %d de %d. \n", numberOfGame, quantityGames);
-        // codigo playGame;
-
-
-        // codigo una vez terminado el juego.
-        isFinishGame = askFinishGame();
-
-        if(!isFinishGame){
-            numberOfGame++;
-        }
-    }
-
-
-    /**
-     * hacerlo aca
-     * Al finalizar la sesión de juego se deberá:
-     *  1. Indicar las palabras empleadas en cada partida con los puntajes obtenidos
-     *  2. Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
-     *  3. Señalar el promedio de los puntajes en que logró una victoria
-    */ 
-    
+void playGame(){
 
     char **wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char *));
     char *fiveLetterWord = malloc(6 * sizeof(char));
@@ -333,6 +259,67 @@ int main()
     free(guess);
     free(attempts);
     free(inputYellowLetters);
+};
+
+int selectNumberOfGames(){
+    int quantityGames = 0;
+
+    while(quantityGames < 1 || quantityGames > 8){
+        printf("Cuantas partidas deseas jugar? (max 8) \n");
+        scanf("%d", &quantityGames);
+
+        if(quantityGames < 1 || quantityGames > 8){
+            printf("Ingrese una cantidad de partidas validas. \n");
+            continue;
+        }
+    }
+    return quantityGames;
+}
+
+bool askFinishGame(){
+    printf("Desea finalizar el juego? [y/n] \n");
+    char finishGame[1] = {"x"};
+
+    while(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
+        scanf("%s", &finishGame[0]);
+        if(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
+            printf("Debe ingresar una respuesta valida. [y/n] \n");
+        }
+        continue;
+    }
+
+    return finishGame[0] == YES[0] ? true : false;
+}
+
+int main()
+{
+    int quantityGames;
+    quantityGames = selectNumberOfGames();
+
+    int numberOfGame = 1;
+    bool isFinishGame;
+
+    while(numberOfGame <= quantityGames && !isFinishGame){
+        isFinishGame = false;
+        printf("Partida nro. %d de %d. \n", numberOfGame, quantityGames);
+        
+        playGame();
+
+        // codigo una vez terminado el juego.
+        isFinishGame = askFinishGame();
+        if(!isFinishGame){
+            numberOfGame++;
+        }
+    }
+
+
+    /**
+     * hacerlo aca
+     * Al finalizar la sesión de juego se deberá:
+     *  1. Indicar las palabras empleadas en cada partida con los puntajes obtenidos
+     *  2. Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
+     *  3. Señalar el promedio de los puntajes en que logró una victoria
+    */ 
 
     return 0;
 }
