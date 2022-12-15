@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "game.structure.c"
 
 #define MAX_NUM_OF_WORDS 100
 #define MAX_GUESSES 6
@@ -261,54 +262,57 @@ void playGame(){
     free(inputYellowLetters);
 };
 
-int selectNumberOfGames(){
-    int quantityGames = 0;
+int selectNumberOfSession(){
+    int sessionsQuanity = 0;
 
-    while(quantityGames < 1 || quantityGames > 8){
+    while(sessionsQuanity < 1 || sessionsQuanity > 8){
         printf("Cuantas partidas deseas jugar? (max 8) \n");
-        scanf("%d", &quantityGames);
+        scanf("%d", &sessionsQuanity);
 
-        if(quantityGames < 1 || quantityGames > 8){
+        if(sessionsQuanity < 1 || sessionsQuanity > 8){
             printf("Ingrese una cantidad de partidas validas. \n");
             continue;
         }
     }
-    return quantityGames;
+    return sessionsQuanity;
 }
 
-bool askFinishGame(){
+bool askFinishSession(){
     printf("Desea finalizar el juego? [y/n] \n");
-    char finishGame[1] = {"x"};
+    char finishSession[1] = {"x"};
 
-    while(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
-        scanf("%s", &finishGame[0]);
-        if(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
+    while(finishSession[0] != YES[0] && finishSession[0] != NO[0]){
+        scanf("%s", &finishSession[0]);
+        if(finishSession[0] != YES[0] && finishSession[0] != NO[0]){
             printf("Debe ingresar una respuesta valida. [y/n] \n");
         }
         continue;
     }
 
-    return finishGame[0] == YES[0] ? true : false;
+    return finishSession[0] == YES[0] ? true : false;
 }
 
 int main()
-{
-    int quantityGames;
-    quantityGames = selectNumberOfGames();
+{    
+    int sessionsQuantity;
+    sessionsQuantity = selectNumberOfSessions();
 
-    int numberOfGame = 1;
-    bool isFinishGame;
+    struct Game games[sessionsQuantity];
+    games[0].gameNumber = 1;
 
-    while(numberOfGame <= quantityGames && !isFinishGame){
-        isFinishGame = false;
-        printf("Partida nro. %d de %d. \n", numberOfGame, quantityGames);
+    int sessionNumber = 1;
+    bool endSession;
+
+    while(sessionNumber <= sessionsQuantity && !endSession){
+        endSession = false;
+        printf("Partida nro. %d de %d. \n", sessionNumber, sessionsQuantity);
         
         playGame();
 
         // codigo una vez terminado el juego.
-        isFinishGame = askFinishGame();
-        if(!isFinishGame){
-            numberOfGame++;
+        endSession = askFinishSession();
+        if(!endSession){
+            sessionNumber++;
         }
     }
 
