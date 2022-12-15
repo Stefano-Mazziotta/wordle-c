@@ -1,24 +1,3 @@
-/*
- * links importantes
- *   https://es.stackoverflow.com/questions/376010/c%C3%B3mo-funcionan-realmente-los-arrays-bidimensionales-din%C3%A1micos-en-c
- *   https://www.knowprogram.com/c-programming/2d-array-of-strings-in-c/
- *   https://beginnersbook.com/2014/01/2d-arrays-in-c-example/
- *   https://stackoverflow.com/questions/25531341/strcpy-segmentation-fault-c
- *   https://stackoverflow.com/questions/36890624/malloc-a-2d-array-in-c
- *   https://stackoverflow.com/questions/54244461/dynamically-allocating-memory-for-2d-char-array
- *
- * Desarrollar sistema de puntos
- * Puntaje:
- *
- *  ● El usuario inicia con 5.000 puntos.
- *  ● Si acierta la palabra en el primer intento, gana la jugada con una puntuación de 10.000.
- *  ● A medida que realice intentos sin lograr descubrir la palabra, es decir use otra fila, se le  descuenta 500.
- *  ● Además, en cada intento suman 50 puntos las nuevas letras acertadas (en lugar incorrecto) y 100 las nuevas letras ubicadas correctamente.
- *  ● Finalmente al ganar recibe 2.000 puntos adicionales.
- *
- *  Si no logra descubrir la palabra la puntuación final es 0.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +20,9 @@
 #define POINTS_MOVE_NEXT_ROW 500
 
 #define MAX_SIZE_MEMORY_YELLOW_LETTERS 30
+
+#define YES "y"
+#define NO "n"
 
 int calculatePointsGreenYellow(int **attempts, int numOfGuesses){
     int total = 0;
@@ -218,8 +200,81 @@ int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
     return wordCount;
 }
 
+int selectNumberOfGames(){
+    int quantityGames = 0;
+
+    while(quantityGames < 1 || quantityGames > 8){
+        printf("Cuantas partidas deseas jugar? (max 8) \n");
+        scanf("%d", &quantityGames);
+
+        if(quantityGames < 1 || quantityGames > 8){
+            printf("Ingrese una cantidad de partidas validas. \n");
+            continue;
+        }
+    }
+    return quantityGames;
+}
+
+bool askFinishGame(){
+    printf("Desea finalizar el juego? [y/n] \n");
+    char finishGame[1] = {"x"};
+
+    while(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
+        scanf("%s", &finishGame[0]);
+        if(finishGame[0] != YES[0] && finishGame[0] != NO[0]){
+            printf("Debe ingresar una respuesta valida. [y/n] \n");
+        }
+        continue;
+    }
+
+    return finishGame[0] == YES[0] ? true : false;
+}
+
 int main()
 {
+/*
+ *  Sesión de Juego:
+ *      
+ *      El jugador elegirá participar de una sesión de juego, donde se le solicitará indicar cuantas
+ *      partidas o jugadas quieren realizarse, con un máximo de 8(ocho).
+ *      
+ *      Deberá ofrecerse también la posibilidad de finalizar el juego luego de que cada partida finalice.
+ * 
+ *      Durante el juego, y antes de iniciar una partida debe indicarse el número de partida y cuantas
+ *      se jugarán en total. Por ejemplo indicar - Partida Nro 2 de 6.
+ * 
+ *       */
+
+
+    int quantityGames;
+    quantityGames = selectNumberOfGames();
+
+    int numberOfGame = 1;
+    bool isFinishGame;
+    
+    while(numberOfGame <= quantityGames && !isFinishGame){
+        isFinishGame = false;
+        printf("Partida nro. %d de %d. \n", numberOfGame, quantityGames);
+        // codigo playGame;
+
+
+        // codigo una vez terminado el juego.
+        isFinishGame = askFinishGame();
+
+        if(!isFinishGame){
+            numberOfGame++;
+        }
+    }
+
+
+    /**
+     * hacerlo aca
+     * Al finalizar la sesión de juego se deberá:
+     *  1. Indicar las palabras empleadas en cada partida con los puntajes obtenidos
+     *  2. Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
+     *  3. Señalar el promedio de los puntajes en que logró una victoria
+    */ 
+    
 
     char **wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char *));
     char *fiveLetterWord = malloc(6 * sizeof(char));
