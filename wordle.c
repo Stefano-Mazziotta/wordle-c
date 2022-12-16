@@ -24,6 +24,7 @@
 
 #define YES "y"
 #define NO "n"
+#define FIRST_GAME 1
 
 int calculatePointsGreenYellow(int **attempts, int numOfGuesses){
     int total = 0;
@@ -165,7 +166,7 @@ bool processGuess(const char *answer, const char *guess, int **attempts, int num
     return strcmp(clue, "GGGGG") == 0;
 }
 
-void endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int score)
+struct Game endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int score)
 {
     // display end of game message
     if (guessedCorrectly)
@@ -182,7 +183,15 @@ void endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int score)
         printf("Perdiste! Usaste las 6 vidas sin adivinar... la palabra correcta es '%s'\n", answer);
     }
 
-    printf("Tú puntuación final es de %d puntos.\n", score);
+    printf("Tú puntuación final es de %d puntos.\n\n", score);
+
+    struct Game game;
+
+    game.isVictory = guessedCorrectly;
+    game.score = score;
+    strcpy(game.answer, answer); 
+
+    return game;
 }
 
 int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
@@ -201,7 +210,7 @@ int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
     return wordCount;
 }
 
-void playGame(){
+struct Game playGame(){
 
     char **wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char *));
     char *fiveLetterWord = malloc(6 * sizeof(char));
@@ -249,36 +258,47 @@ void playGame(){
 
         numOfGuesses += 1;
         guessedCorrectly = processGuess(answer, guess, attempts, numOfGuesses, inputYellowLetters);
-        
     }
     
     int score = calculateScore(attempts, guessedCorrectly, numOfGuesses);
-    endGame(guessedCorrectly, numOfGuesses, answer, score);
+    struct Game game = endGame(guessedCorrectly, numOfGuesses, answer, score);
 
     free(wordsList);
     free(fiveLetterWord);
     free(guess);
     free(attempts);
     free(inputYellowLetters);
+
+    return game;
 };
 
-int selectNumberOfSession(){
+int selectNumberOfGames(){
     int sessionsQuanity = 0;
 
     while(sessionsQuanity < 1 || sessionsQuanity > 8){
-        printf("Cuantas partidas deseas jugar? (max 8) \n");
+        
+        printf("Cuantas partidas deseas jugar? (max 8): ");
         scanf("%d", &sessionsQuanity);
+        
+        // si el usuario ingresa un char equivodacademente.
+        while (sessionsQuanity == 0) {
+            fprintf(stderr, "Debe ingresar un numero del 1 al 8: ");
+            do {
+                sessionsQuanity = getchar();
+            } while ((sessionsQuanity != EOF) && (sessionsQuanity != '\n'));
+            sessionsQuanity = scanf("%d", &sessionsQuanity);
+        }
 
         if(sessionsQuanity < 1 || sessionsQuanity > 8){
-            printf("Ingrese una cantidad de partidas validas. \n");
+            printf("Ingrese una valida cantidad de partidas. \n\n");
             continue;
         }
     }
     return sessionsQuanity;
 }
 
-bool askFinishSession(){
-    printf("Desea finalizar el juego? [y/n] \n");
+bool askFinishGame(){
+    printf("Desea finalizar el juego? [y/n]: ");
     char finishSession[1] = {"x"};
 
     while(finishSession[0] != YES[0] && finishSession[0] != NO[0]){
@@ -292,38 +312,176 @@ bool askFinishSession(){
     return finishSession[0] == YES[0] ? true : false;
 }
 
-int main()
-{    
-    int sessionsQuantity;
-    sessionsQuantity = selectNumberOfSessions();
+void showWordsPlayedAndScore(struct Game games[], int gamesQuantity){
 
-    struct Game games[sessionsQuantity];
-    games[0].gameNumber = 1;
+    
+    // int lengthArrayGames = sizeof(games) / sizeof(struct Game); 
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+        int gameNumber = gameIndex + 1;
+        printf("\n");
+        printf("Partida nro. %d: \n", gameNumber);
+        printf("    respuesta: %s \n", game.answer);
+        printf("    puntaje: %d\n\n", game.score);
+    }
+}
 
-    int sessionNumber = 1;
-    bool endSession;
+void findAndShowGamesMaxScore(struct Game games[], int gamesQuantity){
 
-    while(sessionNumber <= sessionsQuantity && !endSession){
-        endSession = false;
-        printf("Partida nro. %d de %d. \n", sessionNumber, sessionsQuantity);
+    int maxScore = -1;
+    int numberGameMaxScore = 0;
+
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+    
+        if(game.score > maxScore){
+            maxScore = game.score;
+        }
+    }    
+
+    int countGamesMaxScore = 0;
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
         
-        playGame();
-
-        // codigo una vez terminado el juego.
-        endSession = askFinishSession();
-        if(!endSession){
-            sessionNumber++;
+        if(game.score == maxScore){
+            countGamesMaxScore++;
         }
     }
 
+    int gamesMaxScore[countGamesMaxScore];
+    int indexGameMaxScore = 0;
+    
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+        
+        if(game.score == maxScore){
+            gamesMaxScore[indexGameMaxScore] = game.gameNumber;
+            indexGameMaxScore++;
+        }
+    }
 
-    /**
-     * hacerlo aca
-     * Al finalizar la sesión de juego se deberá:
-     *  1. Indicar las palabras empleadas en cada partida con los puntajes obtenidos
-     *  2. Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
-     *  3. Señalar el promedio de los puntajes en que logró una victoria
-    */ 
+    printf("Partidas con mas puntaje: ");
+    for (int i = 0; i < countGamesMaxScore; i++)
+    {
+        printf("%d-", gamesMaxScore[i]);
+    }    
+    printf("\n");
+}
+
+void findAndShowGamesMinScore(struct Game games[], int gamesQuantity){
+
+    int minScore = 100000000;
+    int numberGameMinScore = 0;
+
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+    
+        if(game.score < minScore){
+            minScore = game.score;
+        }        
+    }    
+
+    int countGamesMinScore = 0;
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+        
+        if(game.score == minScore){
+            countGamesMinScore++;
+        }
+    }
+
+    int gamesMinScore[countGamesMinScore];
+    int indexGameMinScore = 0;
+    
+    for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
+    {
+        struct Game game = games[gameIndex];
+        
+        if(game.score == minScore){
+            gamesMinScore[indexGameMinScore] = game.gameNumber;
+            indexGameMinScore++;
+        }
+    }
+
+    printf("Partidas con menos puntaje: ");
+    for (int i = 0; i < countGamesMinScore; i++)
+    {
+        printf("%d-", gamesMinScore[i]);
+    }    
+    printf("\n");
+
+    // printf("La partida nro. %d obtuvo el puntaje más bajo \n", numberGameMinScore);
+}
+
+float getAverageScoreOfWins(struct Game games[], int gamesQuantity){
+    int totalScoreOfWins = 0;
+
+    for(int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++){
+        struct Game game = games[gameIndex];
+        totalScoreOfWins = totalScoreOfWins + game.score;
+    }
+
+    float averageScoreOfWins = totalScoreOfWins / gamesQuantity;
+    return averageScoreOfWins;
+}
+
+int main()
+{    
+    int gamesQuantity;
+    gamesQuantity = selectNumberOfGames();
+
+    // reservar memoria dinamicamente
+    struct Game games[8];    
+
+    int gameNumber = FIRST_GAME;
+    bool endGame;
+
+    while(gameNumber <= gamesQuantity && !endGame){
+        int actualGame = 0;
+        endGame = true;
+        
+        printf("Partida nro. %d de %d. \n\n", gameNumber, gamesQuantity);
+        
+        struct Game game = playGame();
+        game.gameNumber = gameNumber;
+
+        // guardar partidas en array "games".
+        games[gameNumber - 1] = game; 
+
+        // codigo una vez terminado el juego.
+        if(gamesQuantity > gameNumber){
+
+            endGame = askFinishGame();
+            if(!endGame){
+                gameNumber++;
+            }
+        }
+        
+    }
+    gamesQuantity = gameNumber;
+
+    // indicar las palabras empleadas en cada partida con los puntajes obtenidos.
+    showWordsPlayedAndScore(games,gamesQuantity);
+
+    // Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
+    if(gamesQuantity == 1){
+        printf("En una sesion, juega 2 o más partidas para comparar puntaje. \n\n");
+    }
+
+    if(gamesQuantity > 1){
+        findAndShowGamesMinScore(games, gamesQuantity);
+        findAndShowGamesMaxScore(games, gamesQuantity);
+    }
+
+    // Señalar el promedio de los puntajes en que logró una victoria.
+    float averageScoreOfWins = getAverageScoreOfWins(games,gamesQuantity);
+    printf("El puntaje promedio de las victorias es de %.6f \n\n\n", averageScoreOfWins);
 
     return 0;
 }
