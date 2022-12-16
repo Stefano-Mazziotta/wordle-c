@@ -26,8 +26,16 @@
 #define NO "n"
 #define FIRST_GAME 1
 
+/*
+ * @nameFunction "calculatePointsGreenYellow"
+ * @brief Calcula el score de las letras correctas pero mal ubicadas (yellow).
+ * 
+ * @param int **attempts
+ * @param int numOfGuesses
+ * @return int totalScoreYellowLetters
+*/
 int calculatePointsGreenYellow(int **attempts, int numOfGuesses){
-    int total = 0;
+    int totalScoreYellowLetters = 0;
 
     for (int row = 0; row < numOfGuesses; row++)
     {
@@ -35,15 +43,24 @@ int calculatePointsGreenYellow(int **attempts, int numOfGuesses){
         {
             int value = attempts[row][column];
             if(value != -1 && row != MAX_GUESSES - 1){
-                total = total + value;
+                totalScoreYellowLetters = totalScoreYellowLetters + value;
             }
         }
         
     }
 
-    return total;
+    return totalScoreYellowLetters;
 }
 
+/*
+ * @nameFunction "calculateScore"
+ * @brief Calcula el score obtenido en la partida.
+ * 
+ * @param int **attempts
+ * @param bool guessedCorrectly
+ * @param int numOfGuesses
+ * @return int score
+*/
 int calculateScore(int **attempts, bool guessedCorrectly, int numOfGuesses)
 {
     int score = 5000;
@@ -70,9 +87,16 @@ int calculateScore(int **attempts, bool guessedCorrectly, int numOfGuesses)
     return score;
 }
 
-// busca si existe una [G = "100 puntos"] dentro de la pista del intento actual -> linea 126.
-//  - si la hay, establece 0 (NO_POINTS) a las siguientes filas en la misma posicion de la letra correcta ingresada.
-//  - si no la hay, pasa a la letra siguiente.
+/*
+ * @nameFunction "checkLettersGreen"
+ * @brief Busca si existe una [G = "100 puntos"] en el intento actual.
+ * Si la hay, establece 0 (NO_POINTS) a las siguientes filas en la misma posicion de la letra correcta ingresada.     
+ * Si no la hay, pasa a la letra siguiente.
+ * 
+ * @param int **attempts
+ * @param int numOfGuesses
+ * @return void
+*/
 void checkLettersGreen(int **attempts, int numOfGuesses)
 {
     int row = numOfGuesses - 1;
@@ -90,27 +114,41 @@ void checkLettersGreen(int **attempts, int numOfGuesses)
     }
 }
 
-bool checkRepeatedLetterYellow(char *inputLetters, char yellowLetter)
+/*
+ * @nameFunction "checkRepeatedLetterYellow"
+ * @brief Busca la letra amarilla ingresada en el array de letras amarillas ingresadas en los turnos anteriores.
+ * 
+ * @param char *inputLetters
+ * @param char yellowLetter
+ * @return bool existLetterInArray
+*/
+bool checkRepeatedLetterYellow(char *inputYellowLetters, char yellowLetter)
 {
-    
-    // inputLetters -> array unidimensional de letras amarillas (correctas en lugar quivocado) ingresadas anteriormente.
+    // inputYellowLetters -> array unidimensional de letras amarillas (correctas en lugar quivocado) ingresadas anteriormente.
     // letter -> letra amarilla de la palabra ingresada.
-    // verificar que la letra ingresada esta en inputLetters.
 
-    //  si esta, retorno true
-    //  si no esta, la agrego al array y retorno false;
-    bool existLetterInArray = strpbrk(inputLetters, &yellowLetter) != 0; 
+    bool existLetterInArray = strpbrk(inputYellowLetters, &yellowLetter) != 0; 
     if(existLetterInArray){
-        return true;
+        return existLetterInArray;
     }
     
-    int len = strlen(inputLetters);
-    inputLetters[len] = yellowLetter;
-    inputLetters[len+1] = '\0';
+    int len = strlen(inputYellowLetters);
+    inputYellowLetters[len] = yellowLetter;
+    inputYellowLetters[len+1] = '\0';
 
-    return false;
+    return existLetterInArray;
 }
 
+/*
+ * @nameFunction "processGuess"
+ * @brief Procesa y compara la palabra ingresada por el usuario contra la respuesta. 
+ * @param char *answer
+ * @param char *guess
+ * @param char **attempts
+ * @param int numOfGuesses
+ * @param char *inputYellowLetters
+ * @return bool guessedCorrectly
+*/
 bool processGuess(const char *answer, const char *guess, int **attempts, int numOfGuesses, char *inputYellowLetters)
 {
     // the clue
@@ -166,6 +204,15 @@ bool processGuess(const char *answer, const char *guess, int **attempts, int num
     return strcmp(clue, "GGGGG") == 0;
 }
 
+/*
+ * @nameFunction "endGame"
+ * @brief Muestra informacion al usuario de la partida jugada. 
+ * @param bool guessedCorrectly
+ * @param int numOfGuesses
+ * @param char *answer
+ * @param int score
+ * @return struct Game
+*/
 struct Game endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int score)
 {
     // display end of game message
@@ -194,10 +241,18 @@ struct Game endGame(bool guessedCorrectly, int numOfGuesses, char *answer, int s
     return game;
 }
 
-int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
+/*
+ * @nameFunction "loadWords"
+ * @brief Carga todas las palabras del archivo .txt a un array. 
+ * @param char **wordList
+ * @param char *fiveLetterWord
+ * @return int wordCount
+*/
+int loadWords(char **wordsList, char *fiveLetterWord)
 {
 
     FILE *wordsFile = fopen("words.txt", "r");
+    int wordCount = 0;
 
     while (fscanf(wordsFile, "%s", fiveLetterWord) != EOF && wordCount < MAX_NUM_OF_WORDS)
     {
@@ -210,14 +265,19 @@ int loadWords(char **wordsList, char *fiveLetterWord, int wordCount)
     return wordCount;
 }
 
+/*
+ * @nameFunction "playGame"
+ * @brief Inicia una partida. 
+ * @param void
+ * @return struct Game
+*/
 struct Game playGame(){
 
     char **wordsList = calloc(MAX_NUM_OF_WORDS, sizeof(char *));
     char *fiveLetterWord = malloc(6 * sizeof(char));
     char *inputYellowLetters = (char*)malloc ( MAX_SIZE_MEMORY_YELLOW_LETTERS * sizeof (char));
 
-    int wordCount = 0;
-    wordCount = loadWords(wordsList, fiveLetterWord, wordCount);
+    int wordCount = loadWords(wordsList, fiveLetterWord);
 
     // pick a word randomly
     srand(time(NULL));
@@ -272,32 +332,44 @@ struct Game playGame(){
     return game;
 };
 
+/*
+ * @nameFunction "selectNUmberOfGames"
+ * @brief Solicita al usuario la cantidad de partidas que desea jugar y lo devuelve a main. 
+ * @param void
+ * @return int sessionsQuantity
+*/
 int selectNumberOfGames(){
-    int sessionsQuanity = 0;
+    int sessionsQuantity = 0;
 
-    while(sessionsQuanity < 1 || sessionsQuanity > 8){
+    while(sessionsQuantity < 1 || sessionsQuantity > 8){
         
         printf("Cuantas partidas deseas jugar? (max 8): ");
-        scanf("%d", &sessionsQuanity);
+        scanf("%d", &sessionsQuantity);
         
-        // si el usuario ingresa un char equivodacademente.
-        while (sessionsQuanity == 0) {
+        // si el sessionsQuantityingresa un char equivodacademente.
+        while (sessionsQuantity == 0) {
             fprintf(stderr, "Debe ingresar un numero del 1 al 8: ");
             do {
-                sessionsQuanity = getchar();
-            } while ((sessionsQuanity != EOF) && (sessionsQuanity != '\n'));
-            sessionsQuanity = scanf("%d", &sessionsQuanity);
+                sessionsQuantity = getchar();
+            } while ((sessionsQuantity != EOF) && (sessionsQuantity != '\n'));
+            sessionsQuantity = scanf("%d", &sessionsQuantity);
         }
 
-        if(sessionsQuanity < 1 || sessionsQuanity > 8){
-            printf("Ingrese una valida cantidad de partidas. \n\n");
-            continue;
+        if(sessionsQuantity < sessionsQuantity || sessionsQuantity > 8){
+            printf("Ingrese una sessionsQuantitya cantidad de partidas. \n\n");
+            sessionsQuantity;
         }
     }
-    return sessionsQuanity;
+    return sessionsQuantity;
 }
 
-bool askFinishGame(){
+/*
+ * @nameFunction "askFinishSession"
+ * @brief Pregunta al usuario si desea terminar la sesion. 
+ * @param void
+ * @return bool isFinishSession
+*/
+bool askFinishSession(){
     printf("Desea finalizar el juego? [y/n]: ");
     char finishSession[1] = {"x"};
 
@@ -312,9 +384,15 @@ bool askFinishGame(){
     return finishSession[0] == YES[0] ? true : false;
 }
 
+/*
+ * @nameFunction "showWordsPlayedAndScore"
+ * @brief Muestra al usuario las palabras empleadas en cada partida con los puntajes obtenidos.
+ * @param struct game Games[]
+ * @param int gamesQuantity
+ * @return void
+*/
 void showWordsPlayedAndScore(struct Game games[], int gamesQuantity){
 
-    
     // int lengthArrayGames = sizeof(games) / sizeof(struct Game); 
     for (int gameIndex = 0; gameIndex < gamesQuantity; gameIndex++)
     {
@@ -327,6 +405,13 @@ void showWordsPlayedAndScore(struct Game games[], int gamesQuantity){
     }
 }
 
+/*
+ * @nameFunction "findAndShowGamesMaxScore"
+ * @brief Muestra al usuario en cuál o cuáles partidas se obtuvo más alto.
+ * @param struct game Games[]
+ * @param int gamesQuantity
+ * @return void
+*/
 void findAndShowGamesMaxScore(struct Game games[], int gamesQuantity){
 
     int maxScore = -1;
@@ -372,6 +457,13 @@ void findAndShowGamesMaxScore(struct Game games[], int gamesQuantity){
     printf("\n");
 }
 
+/*
+ * @nameFunction "findAndShowGamesMinScore"
+ * @brief Muestra al usuario en cuál o cuáles partidas se obtuvo más bajo.
+ * @param struct game Games[]
+ * @param int gamesQuantity
+ * @return void
+*/
 void findAndShowGamesMinScore(struct Game games[], int gamesQuantity){
 
     int minScore = 100000000;
@@ -419,6 +511,13 @@ void findAndShowGamesMinScore(struct Game games[], int gamesQuantity){
     // printf("La partida nro. %d obtuvo el puntaje más bajo \n", numberGameMinScore);
 }
 
+/*
+ * @nameFunction "getAverageScoreOfWins"
+ * @brief Devuelve el promedio de los puntajes en que logró una victoria.
+ * @param struct game Games[]
+ * @param int gamesQuantity
+ * @return float averageScoreOfWins
+*/
 float getAverageScoreOfWins(struct Game games[], int gamesQuantity){
     int totalScoreOfWins = 0;
 
@@ -440,11 +539,11 @@ int main()
     struct Game games[8];    
 
     int gameNumber = FIRST_GAME;
-    bool endGame;
+    bool endSession;
 
-    while(gameNumber <= gamesQuantity && !endGame){
+    while(gameNumber <= gamesQuantity && !endSession){
         int actualGame = 0;
-        endGame = true;
+        endSession = true;
         
         printf("Partida nro. %d de %d. \n\n", gameNumber, gamesQuantity);
         
@@ -457,8 +556,8 @@ int main()
         // codigo una vez terminado el juego.
         if(gamesQuantity > gameNumber){
 
-            endGame = askFinishGame();
-            if(!endGame){
+            endSession = askFinishSession();
+            if(!endSession){
                 gameNumber++;
             }
         }
@@ -469,7 +568,7 @@ int main()
     // indicar las palabras empleadas en cada partida con los puntajes obtenidos.
     showWordsPlayedAndScore(games,gamesQuantity);
 
-    // Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo
+    // Señalar en cuál o cuáles partidas se obtuvo el puntaje más alto y el más bajo.
     if(gamesQuantity == 1){
         printf("En una sesion, juega 2 o más partidas para comparar puntaje. \n\n");
     }
